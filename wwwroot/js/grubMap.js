@@ -1,8 +1,11 @@
 window.grubMap = {
     map: null,
     markers: [],
+    dotNetRef: null,
+    lastElements: [],
 
-    initMap: function (containerId) {
+    initMap: function (containerId, dotNetRef) {
+        this.dotNetRef = dotNetRef;
         if (!navigator.geolocation) {
             alert("Geolocation is not supported by your browser.");
             return;
@@ -74,6 +77,7 @@ window.grubMap = {
             const data = await response.json();
 
             if (data.elements && data.elements.length > 0) {
+                this.lastElements = data.elements;
                 this.plotRestaurants(data.elements);
             } else {
                 console.log("No restaurants found within radius.");
@@ -84,16 +88,68 @@ window.grubMap = {
     },
 
     plotRestaurants: function (elements) {
+        // Remove old markers to avoid duplicates when re-rendering
+        this.markers.forEach(m => this.map.removeLayer(m));
+        this.markers = [];
+
+        // Load associations mapping
+        let associations = {};
+        try {
+            const saved = localStorage.getItem('hometownGrub_MapLinks');
+            if (saved) associations = JSON.parse(saved);
+        } catch (e) { }
+
         elements.forEach(el => {
             // Overpass ways/relations might have center coordinates instead of direct lat/lon
             const lat = el.lat || (el.center && el.center.lat);
             const lon = el.lon || (el.center && el.center.lon);
             const name = el.tags && el.tags.name ? el.tags.name : "Unnamed Restaurant";
+            const stringId = String(el.id);
 
             if (lat && lon) {
-                L.marker([lat, lon]).addTo(this.map)
-                    .bindPopup(`<b>${name}</b>`);
+                let popupContent = `<div style="text-align:center;"><b>${name}</b><br/><br/>`;
+
+                if (associations[stringId]) {
+                    const linkedName = associations[stringId];
+                    popupContent += `<span style="color:#555;">Linked to: <i>${linkedName}</i></span><br/>`;
+                    popupContent += `<button onclick="window.grubMap.goToRestaurant('${linkedName}')" style="margin-top:10px; padding:5px 10px; background-color:#27ae60; color:white; border:none; border-radius:3px; cursor:pointer;">Go To Restaurant</button>`;
+                } else {
+                    popupContent += `<button onclick="window.grubMap.promptAssociate('${stringId}', '${name.replace(/'/g, "\\'")}')" style="margin-top:10px; padding:5px 10px; background-color:#3498db; color:white; border:none; border-radius:3px; cursor:pointer;">Associate with Restaurant</button>`;
+                }
+                popupContent += `</div>`;
+
+                const marker = L.marker([lat, lon]).addTo(this.map)
+                    .bindPopup(popupContent);
+                this.markers.push(marker);
             }
         });
+    },
+
+    goToRestaurant: function (restaurantName) {
+        if (this.dotNetRef) {
+            this.dotNetRef.invokeMethodAsync('GoToRestaurantFromMap', restaurantName);
+        }
+    },
+
+    promptAssociate: function (osmId, osmName) {
+        if (this.dotNetRef) {
+            this.dotNetRef.invokeMethodAsync('PromptAssociateRestaurant', osmId, osmName);
+        }
+    },
+
+    saveAssociation: function (osmId, restaurantName) {
+        let associations = {};
+        try {
+            const saved = localStorage.getItem('hometownGrub_MapLinks');
+            if (saved) associations = JSON.parse(saved);
+        } catch (e) { }
+
+        associations[osmId] = restaurantName;
+        localStorage.setItem('hometownGrub_MapLinks', JSON.stringify(associations));
+
+        // Re-plot markers to update the popups with the new link info
+        if (this.lastElements && this.lastElements.length > 0) {
+            this.plotRestaurants(this.lastElements);
+        }
     }
 };

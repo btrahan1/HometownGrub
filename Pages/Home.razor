@@ -80,6 +80,29 @@
                 </div>
             </div>
         }
+
+        @if (isAssociateModalVisible)
+        {
+            <div style="position: absolute; top:0; left:0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 350; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <div style="background: white; padding: 20px; border-radius: 10px; width: 400px; display: flex; flex-direction: column; gap: 15px;">
+                    <h2 style="margin: 0; color: #333; font-family: 'Segoe UI', sans-serif;">Link Restaurant</h2>
+                    <p style="margin: 0; color: #555;">Which saved restaurant should be linked to <b>@currentOsmName</b>?</p>
+                    
+                    <select @bind="selectedRestaurantToAssociate" style="padding: 10px; border-radius: 5px; border: 1px solid #ccc; font-size: 1.1rem; width: 100%;">
+                        <option value="">-- Select Restaurant --</option>
+                        @foreach(var res in restaurantIndex.Keys)
+                        {
+                            <option value="@res">@res</option>
+                        }
+                    </select>
+
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button class="grub-btn grub-btn-secondary" @onclick="CancelAssociation">Cancel</button>
+                        <button class="grub-btn grub-btn-primary" @onclick="ConfirmAssociation">Link & Save</button>
+                    </div>
+                </div>
+            </div>
+        }
     </div>
 }
 
@@ -436,21 +459,68 @@
     }
 
     private bool isMapVisible = false;
+    private DotNetObjectReference<Home>? dotNetRef;
 
     private async Task ShowMapModal()
     {
         isMapVisible = true;
         StateHasChanged();
         
+        dotNetRef ??= DotNetObjectReference.Create(this);
+
         // Give the DOM a tiny moment to render the modal div before attaching Leaflet to it
         await Task.Delay(100);
-        await JSRuntime.InvokeVoidAsync("window.grubMap.initMap", "grubMapContainer");
+        await JSRuntime.InvokeVoidAsync("window.grubMap.initMap", "grubMapContainer", dotNetRef);
     }
 
     private void HideMapModal()
     {
         isMapVisible = false;
         StateHasChanged();
+    }
+
+    private bool isAssociateModalVisible = false;
+    private string currentOsmId = "";
+    private string currentOsmName = "";
+    private string selectedRestaurantToAssociate = "";
+
+    [JSInvokable]
+    public void PromptAssociateRestaurant(string osmId, string osmName)
+    {
+        currentOsmId = osmId;
+        currentOsmName = osmName;
+        selectedRestaurantToAssociate = "";
+        isAssociateModalVisible = true;
+        StateHasChanged();
+    }
+
+    private async Task ConfirmAssociation()
+    {
+        if (!string.IsNullOrEmpty(selectedRestaurantToAssociate))
+        {
+            await JSRuntime.InvokeVoidAsync("window.grubMap.saveAssociation", currentOsmId, selectedRestaurantToAssociate);
+        }
+        isAssociateModalVisible = false;
+        StateHasChanged();
+    }
+
+    private void CancelAssociation()
+    {
+        isAssociateModalVisible = false;
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public async Task GoToRestaurantFromMap(string restaurantName)
+    {
+        if (restaurantIndex.TryGetValue(restaurantName, out var password))
+        {
+            selectedRestaurantName = restaurantName;
+            loadRestaurantPassword = password;
+            HideMapModal();
+            isEditingExisting = true;
+            await LoadExistingRestaurant();
+        }
     }
 
     private async Task CreateNewRestaurant()
