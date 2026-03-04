@@ -6,11 +6,72 @@
 <PageTitle>HometownGrub</PageTitle>
 
 <div style="width: 100vw; height: 100vh; overflow: hidden; margin: 0; padding: 0; position: relative; background: #333;">
+@if (!isRestaurantLoaded)
+{
+    <!-- Start Menu Overlay -->
+    <div style="position: absolute; top:0; left:0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle, #2c3e50 0%, #1a252f 100%); z-index: 200;">
+        <h1 style="color: #f39c12; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 3.5rem; letter-spacing: 4px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); margin-bottom: 40px;">HOMETOWN GRUB</h1>
+        
+        <div style="background: rgba(0,0,0,0.6); padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 400px;">
+            @if (!isEditingExisting)
+            {
+                <h2 style="color: white; margin-top: 0; font-family: 'Segoe UI', sans-serif; text-align: center;">New Restaurant</h2>
+                <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
+                    <input type="text" @bind="newRestaurantName" placeholder="Restaurant Name" style="padding: 10px; border-radius: 5px; border: none; font-size: 1.1rem; width: 100%; box-sizing: border-box;" />
+                    <input type="password" @bind="newRestaurantPassword" placeholder="Admin Password" style="padding: 10px; border-radius: 5px; border: none; font-size: 1.1rem; width: 100%; box-sizing: border-box;" />
+                    <button class="grub-btn grub-btn-primary" @onclick="CreateNewRestaurant" style="width: 100%; margin-top: 10px;">Create & Start Building</button>
+                    @if (!string.IsNullOrEmpty(loginError))
+                    {
+                        <div style="color: #e74c3c; text-align: center; margin-top: 10px; font-weight: bold;">@loginError</div>
+                    }
+                    
+                    <div style="text-align: center; margin-top: 20px; border-top: 1px solid #777; padding-top: 20px;">
+                        <span style="color: #ccc; font-family: 'Segoe UI', sans-serif;">Already have a restaurant?</span><br/>
+                        <button class="grub-btn grub-btn-secondary" style="margin-top: 10px;" @onclick="() => { isEditingExisting = true; loginError = string.Empty; }">Edit Existing Restaurant</button>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <h2 style="color: white; margin-top: 0; font-family: 'Segoe UI', sans-serif; text-align: center;">Load Restaurant</h2>
+                <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
+                    @if (restaurantIndex.Count == 0)
+                    {
+                        <div style="color: #ccc; text-align: center; font-style: italic;">No restaurants found.</div>
+                    }
+                    else
+                    {
+                        <select @bind="selectedRestaurantName" style="padding: 10px; border-radius: 5px; border: none; font-size: 1.1rem; width: 100%; box-sizing: border-box;">
+                            <option value="">-- Select Restaurant --</option>
+                            @foreach(var res in restaurantIndex.Keys)
+                            {
+                                <option value="@res">@res</option>
+                            }
+                        </select>
+                        <input type="password" @bind="loadRestaurantPassword" placeholder="Admin Password" style="padding: 10px; border-radius: 5px; border: none; font-size: 1.1rem; width: 100%; box-sizing: border-box;" />
+                        <button class="grub-btn grub-btn-primary" @onclick="LoadExistingRestaurant" style="width: 100%; margin-top: 10px;">Load & Continue Building</button>
+                    }
+                    
+                    @if (!string.IsNullOrEmpty(loginError))
+                    {
+                        <div style="color: #e74c3c; text-align: center; margin-top: 10px; font-weight: bold;">@loginError</div>
+                    }
+
+                    <div style="text-align: center; margin-top: 20px; border-top: 1px solid #777; padding-top: 20px;">
+                        <button class="grub-btn grub-btn-secondary" @onclick="() => { isEditingExisting = false; loginError = string.Empty; }">← Back to Create New</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<div style="width: 100%; height: 100%; display: @(isRestaurantLoaded ? "block" : "none");">
     <canvas id="renderCanvas" style="width: 100%; height: 100%; touch-action: none; outline: none;"></canvas>
     
     <!-- Top Bar -->
     <div style="position: absolute; top: 0; left: 0; right: 0; height: 60px; background: rgba(0,0,0,0.8); display: flex; align-items: center; padding: 0 20px; z-index: 10;">
-        <h1 style="color: #fff; margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 1.5rem; letter-spacing: 2px;">HOMETOWN GRUB - DESIGNER</h1>
+        <h1 style="color: #fff; margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 1.5rem; letter-spacing: 2px;">HOMETOWN GRUB - @activeRestaurantName.ToUpper()</h1>
         <div style="flex-grow: 1;"></div>
         <button class="grub-btn grub-btn-primary" style="margin-right: 20px; padding: 5px 15px; font-size: 1.1rem; background-color: #8b4513;" @onclick="OpenMenuBook">
             📖 View Menu
@@ -192,6 +253,7 @@
         </div>
     }
 </div>
+</div>
 
 <style>
     .grub-btn {
@@ -246,6 +308,23 @@
     private bool showMenuBook = false;
     private int currentMenuPage = 0;
 
+    // Multi-Save State Logic
+    private bool isRestaurantLoaded = false;
+    private bool isEditingExisting = false;
+    private Dictionary<string, string> restaurantIndex = new(); // Name -> Password
+    
+    // Create Mode variables
+    private string newRestaurantName = "";
+    private string newRestaurantPassword = "";
+    
+    // Load Mode variables
+    private string selectedRestaurantName = "";
+    private string loadRestaurantPassword = "";
+    private string loginError = "";
+    
+    // Active Session
+    private string activeRestaurantName = "";
+
     public static Action<string, float, float, float, float> OnBuildingPlacedAction;
     public static Action<float, float, float> OnBuildingRemovedAction;
 
@@ -276,6 +355,109 @@
         }
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadRestaurantIndex();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadRestaurantIndex()
+    {
+        var indexJson = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "hometownGrub_Index");
+        if (!string.IsNullOrEmpty(indexJson))
+        {
+            try
+            {
+                restaurantIndex = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(indexJson) ?? new();
+            }
+            catch { restaurantIndex = new(); }
+        }
+    }
+
+    private async Task SaveRestaurantIndex()
+    {
+        var json = System.Text.Json.JsonSerializer.Serialize(restaurantIndex);
+        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "hometownGrub_Index", json);
+    }
+
+    private async Task CreateNewRestaurant()
+    {
+        loginError = "";
+        if (string.IsNullOrWhiteSpace(newRestaurantName) || string.IsNullOrWhiteSpace(newRestaurantPassword))
+        {
+            loginError = "Name and Password are required.";
+            return;
+        }
+
+        if (restaurantIndex.ContainsKey(newRestaurantName))
+        {
+            loginError = "A restaurant with that name already exists.";
+            return;
+        }
+
+        // Initialize new
+        restaurantIndex[newRestaurantName] = newRestaurantPassword;
+        await SaveRestaurantIndex();
+
+        activeRestaurantName = newRestaurantName;
+        isRestaurantLoaded = true;
+        
+        // Reset defaults for new save
+        funds = 5000;
+        placedItems.Clear();
+        currentFlooring = "Concrete";
+        currentFloorColor = "#999999";
+        currentWalls = "Paint";
+        currentWallColor = "#E0E0E0";
+        
+        await SaveState();
+        await Initialize3DContext();
+    }
+
+    private async Task LoadExistingRestaurant()
+    {
+        loginError = "";
+        if (string.IsNullOrWhiteSpace(selectedRestaurantName) || string.IsNullOrWhiteSpace(loadRestaurantPassword))
+        {
+            loginError = "Please select a restaurant and enter the password.";
+            return;
+        }
+
+        if (restaurantIndex.TryGetValue(selectedRestaurantName, out string? correctPassword))
+        {
+            if (correctPassword == loadRestaurantPassword)
+            {
+                activeRestaurantName = selectedRestaurantName;
+                isRestaurantLoaded = true;
+                await Initialize3DContext();
+                await LoadState();
+            }
+            else
+            {
+                loginError = "Incorrect password.";
+            }
+        }
+        else
+        {
+            loginError = "Restaurant not found.";
+        }
+    }
+
+    private async Task Initialize3DContext()
+    {
+        // Need a tiny delay for the UI to toggle the canvas from display:none to block before initialization
+        await Task.Delay(100); 
+        await JSRuntime.InvokeVoidAsync("window.grubEngine.init", "renderCanvas");
+        
+        // Apply fresh loaded state settings immediately after init
+        await JSRuntime.InvokeVoidAsync("window.grubEngine.loadBuildings", placedItems);
+        await JSRuntime.InvokeVoidAsync("window.grubEngine.setFlooring", currentFlooring, currentFloorColor);
+        await JSRuntime.InvokeVoidAsync("window.grubEngine.setWalls", currentWalls, currentWallColor);
+    }
+
     private void OpenMenuBook()
     {
         showMenuBook = true;
@@ -300,15 +482,6 @@
         if (currentMenuPage >= 2)
         {
             currentMenuPage -= 2;
-        }
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            await JSRuntime.InvokeVoidAsync("window.grubEngine.init", "renderCanvas");
-            await LoadState();
         }
     }
 
@@ -389,6 +562,8 @@
 
     private async Task SaveState()
     {
+        if (string.IsNullOrEmpty(activeRestaurantName)) return;
+
         var saveObj = new { 
             Funds = funds, 
             Items = placedItems, 
@@ -398,12 +573,14 @@
             WallColor = currentWallColor
         };
         var json = System.Text.Json.JsonSerializer.Serialize(saveObj);
-        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "hometownGrubSave", json);
+        await JSRuntime.InvokeVoidAsync("localStorage.setItem", $"hometownGrub_Save_{activeRestaurantName}", json);
     }
 
     private async Task LoadState()
     {
-        var json = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "hometownGrubSave");
+        if (string.IsNullOrEmpty(activeRestaurantName)) return;
+
+        var json = await JSRuntime.InvokeAsync<string>("localStorage.getItem", $"hometownGrub_Save_{activeRestaurantName}");
         if (!string.IsNullOrEmpty(json))
         {
             try
