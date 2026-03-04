@@ -82,6 +82,11 @@ window.grubEngine = {
         window.addEventListener("resize", () => {
             if (this.engine) this.engine.resize();
         });
+
+        // Force a resize slightly after init to combat blurry canvas on UI state changes
+        setTimeout(() => {
+            if (this.engine) this.engine.resize();
+        }, 150);
     },
 
     loadBlueprints: async function () {

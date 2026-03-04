@@ -1,0 +1,76 @@
+{
+    "restaurantName": "Applebee's Grill + Bar",
+    "theme": "dark",
+    "pages": [
+        {
+            "title": "Appetizers",
+            "items": [
+                {
+                    "name": "Spinach & Artichoke Dip",
+                    "description": "Creamy spinach, melted cheeses and artichoke hearts, served with tortilla chips.",
+                    "price": "$9.99"
+                },
+                {
+                    "name": "Classic Dip Trio",
+                    "description": "Tortilla chips served with our signature spinach & artichoke dip, queso blanco, and fresh salsa.",
+                    "price": "$12.99"
+                },
+                {
+                    "name": "Boneless Wings",
+                    "description": "Crispy breaded pieces of tender boneless chicken tossed in your choice of sauce.",
+                    "price": "$11.49"
+                }
+            ]
+        },
+        {
+            "title": "Chicken & Seafood",
+            "items": [
+                {
+                    "name": "Bourbon Street Chicken & Shrimp",
+                    "description": "Cajun-seasoned chicken and blackened shrimp in garlic butter, served over sizzling onions and mushrooms with mashed potatoes.",
+                    "price": "$16.99"
+                },
+                {
+                    "name": "Fiesta Lime Chicken",
+                    "description": "Grilled chicken breast topped with chimichurri sauce, melted cheeses and tortilla strips. Served with Spanish rice and pico de gallo.",
+                    "price": "$14.99"
+                },
+                {
+                    "name": "Double Crunch Shrimp",
+                    "description": "Crispy battered shrimp served with coleslaw, fries, and cocktail sauce.",
+                    "price": "$15.49"
+                }
+            ]
+        },
+        {
+            "title": "Steaks & Ribs",
+            "items": [
+                {
+                    "name": "Applebee's Riblets",
+                    "description": "Slow-cooked pork riblets tossed in Honey BBQ or Texas Spicy BBQ sauce, served with fries and coleslaw.",
+                    "price": "$14.99"
+                },
+                {
+                    "name": "8 oz. Top Sirloin",
+                    "description": "Lightly seasoned, fire-grilled sirloin. Served with green beans and garlicky mashed potatoes.",
+                    "price": "$18.99"
+                }
+            ]
+        },
+        {
+            "title": "Desserts",
+            "items": [
+                {
+                    "name": "Triple Chocolate Meltdown",
+                    "description": "Warm, rich, fudge-filled chocolate cake drizzled with hot fudge and topped with vanilla ice cream.",
+                    "price": "$8.99"
+                },
+                {
+                    "name": "Sizzlin' Caramel Apple Blondie",
+                    "description": "Warm apple, nuts, and butter pecan blondie served sizzling with ice cream and caramel sauce.",
+                    "price": "$9.49"
+                }
+            ]
+        }
+    ]
+}

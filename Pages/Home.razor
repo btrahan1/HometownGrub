@@ -76,9 +76,12 @@
         <button class="grub-btn grub-btn-primary" style="margin-right: 20px; padding: 5px 15px; font-size: 1.1rem; background-color: #8b4513;" @onclick="OpenMenuBook">
             📖 View Menu
         </button>
-        <div style="color: #4CAF50; font-weight: bold; font-size: 1.2rem;">
+        <div style="color: #4CAF50; font-weight: bold; font-size: 1.2rem; margin-right: 20px;">
             Funds: $@funds
         </div>
+        <button class="grub-btn grub-btn-secondary" style="padding: 5px 15px; font-size: 1.1rem; border: 1px solid #777;" @onclick="LeaveRestaurant">
+            🚪 Leave Restaurant
+        </button>
     </div>
 
     <!-- Information Overlay -->
@@ -160,6 +163,25 @@
                     <button class="grub-btn grub-btn-secondary" @onclick='() => SetWalls("Plaster")'>🏠 Plaster</button>
                     <button class="grub-btn grub-btn-secondary" @onclick='() => SetWalls("WoodPanel")'>🪵 Wood Paneling</button>
                     <button class="grub-btn grub-btn-secondary" @onclick='() => SetWalls("Paint")'>🖌️ Flat Paint</button>
+                </div>
+            }
+        </div>
+
+        <!-- Menu Configuration Section -->
+        <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #777; padding-bottom: 5px; cursor: pointer;" @onclick='() => showMenuConfig = !showMenuConfig'>
+                <h3 style="color: white; margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 1.2rem;">Menu Options</h3>
+                <span style="color: white;">@(showMenuConfig ? "▼" : "▶")</span>
+            </div>
+            
+            @if (showMenuConfig)
+            {
+                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+                    <label style="color: white; font-family: 'Segoe UI', sans-serif;">Select Menu Data:</label>
+                    <select value="@selectedMenuFile" @onchange="OnMenuFileChanged" style="padding: 10px; border-radius: 5px; border: none; font-size: 1rem; width: 100%; box-sizing: border-box;">
+                        <option value="tgi_fridays_menu.json">TGI Friday's Menu</option>
+                        <option value="applebees_menu.json">Applebee's Menu</option>
+                    </select>
                 </div>
             }
         </div>
@@ -302,8 +324,10 @@
     private bool showItems = true;
     private bool showFloors = false;
     private bool showWalls = false;
+    private bool showMenuConfig = false;
 
     // Menu Book State
+    private string selectedMenuFile = "tgi_fridays_menu.json";
     private RestaurantMenu? restaurantMenu;
     private bool showMenuBook = false;
     private int currentMenuPage = 0;
@@ -344,15 +368,26 @@
     {
         OnBuildingPlacedAction = HandleBuildingPlaced;
         OnBuildingRemovedAction = HandleBuildingRemoved;
-        
+        await FetchCurrentMenuData();
+    }
+
+    private async Task FetchCurrentMenuData()
+    {
         try
         {
-            restaurantMenu = await Http.GetFromJsonAsync<RestaurantMenu>("data/restaurant_menu.json");
+            restaurantMenu = await Http.GetFromJsonAsync<RestaurantMenu>($"data/{@selectedMenuFile}");
         }
         catch (Exception ex)
         {
             Console.WriteLine("Could not load restaurant menu JSON: " + ex.Message);
         }
+    }
+
+    private async Task OnMenuFileChanged(ChangeEventArgs e)
+    {
+        selectedMenuFile = e.Value?.ToString() ?? "tgi_fridays_menu.json";
+        await FetchCurrentMenuData();
+        await SaveState();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -412,6 +447,8 @@
         currentFloorColor = "#999999";
         currentWalls = "Paint";
         currentWallColor = "#E0E0E0";
+        selectedMenuFile = "tgi_fridays_menu.json";
+        await FetchCurrentMenuData();
         
         await SaveState();
         await Initialize3DContext();
@@ -446,10 +483,22 @@
         }
     }
 
+    private async Task LeaveRestaurant()
+    {
+        await SaveState();
+        isRestaurantLoaded = false;
+        activeRestaurantName = "";
+        selectedRestaurantName = "";
+        loadRestaurantPassword = "";
+        newRestaurantName = "";
+        newRestaurantPassword = "";
+        isEditingExisting = true; // Default back to loading screen
+    }
+
     private async Task Initialize3DContext()
     {
         // Need a tiny delay for the UI to toggle the canvas from display:none to block before initialization
-        await Task.Delay(100); 
+        await Task.Delay(200); 
         await JSRuntime.InvokeVoidAsync("window.grubEngine.init", "renderCanvas");
         
         // Apply fresh loaded state settings immediately after init
@@ -570,7 +619,8 @@
             Flooring = currentFlooring, 
             FloorColor = currentFloorColor,
             Walls = currentWalls,
-            WallColor = currentWallColor
+            WallColor = currentWallColor,
+            MenuFile = selectedMenuFile
         };
         var json = System.Text.Json.JsonSerializer.Serialize(saveObj);
         await JSRuntime.InvokeVoidAsync("localStorage.setItem", $"hometownGrub_Save_{activeRestaurantName}", json);
@@ -593,11 +643,17 @@
                     if (dict.TryGetValue("FloorColor", out var colorEl)) currentFloorColor = colorEl.GetString() ?? "#999999";
                     if (dict.TryGetValue("Walls", out var wallsEl)) currentWalls = wallsEl.GetString() ?? "Paint";
                     if (dict.TryGetValue("WallColor", out var wallColorEl)) currentWallColor = wallColorEl.GetString() ?? "#E0E0E0";
+                    if (dict.TryGetValue("MenuFile", out var menuEl)) 
+                    {
+                        selectedMenuFile = menuEl.GetString() ?? "tgi_fridays_menu.json";
+                    }
                     if (dict.TryGetValue("Items", out var itemsEl))
                     {
                         placedItems = System.Text.Json.JsonSerializer.Deserialize<List<BuildingData>>(itemsEl.GetRawText()) ?? new();
                     }
                 }
+                
+                await FetchCurrentMenuData();
                 StateHasChanged();
                 await JSRuntime.InvokeVoidAsync("window.grubEngine.loadBuildings", placedItems);
                 await JSRuntime.InvokeVoidAsync("window.grubEngine.setFlooring", currentFlooring, currentFloorColor);
