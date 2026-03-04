@@ -15,6 +15,11 @@ window.grubEngine = {
     wallMeshes: [],
 
     init: async function (canvasId) {
+        if (this.engine) {
+            this.engine.resize();
+            return;
+        }
+
         this.canvas = document.getElementById(canvasId);
         if (!this.canvas) return;
 
@@ -87,6 +92,10 @@ window.grubEngine = {
         setTimeout(() => {
             if (this.engine) this.engine.resize();
         }, 150);
+
+        if (window.grubNPCs) {
+            window.grubNPCs.init(this.scene);
+        }
     },
 
     loadBlueprints: async function () {
@@ -155,6 +164,10 @@ window.grubEngine = {
         this.placedObjects.forEach(m => m.dispose());
         this.placedObjects = [];
 
+        if (window.grubNPCs) {
+            window.grubNPCs.clearNPCs();
+        }
+
         for (const b of buildings) {
             const mesh = this.buildProceduralMesh(b.type, false);
             if (mesh) {
@@ -168,7 +181,18 @@ window.grubEngine = {
                 mesh.getChildMeshes().forEach(c => c.parentObjectKey = mesh.parentObjectKey);
 
                 this.placedObjects.push(mesh);
+
+                // Spawn cashier if this is the checkout counter
+                if (b.type === 'checkout_counter' && window.grubNPCs && !window.grubNPCs.cashier) {
+                    window.grubNPCs.spawnCashier(mesh);
+                }
             }
+        }
+
+        // Spawn generic ambiance NPCs
+        if (window.grubNPCs) {
+            window.grubNPCs.spawnWaitingLine();
+            window.grubNPCs.spawnWaiters();
         }
     },
 
