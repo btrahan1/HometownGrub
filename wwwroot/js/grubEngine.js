@@ -52,11 +52,22 @@ window.grubEngine = {
                 // Left click while holding object: Place it
                 this.placeCurrentObject();
             } else if (evt.button === 0 && !this.placementMode && pickResult.hit) {
-                // Left click while not holding object: Try to pick up an existing object
                 if (pickResult.pickedMesh && pickResult.pickedMesh.name !== "ground" && pickResult.pickedMesh.parentObjectKey) {
                     const type = pickResult.pickedMesh.parentAssetType;
                     const rot = pickResult.pickedMesh.parentRotY;
                     const key = pickResult.pickedMesh.parentObjectKey;
+
+                    // Support "Sitting Down" with Shift-Click
+                    if (evt.shiftKey) {
+                        if (type === "booth" || type === "chair_wooden" || type === "table_standard") {
+                            if (window.grubNPCs) {
+                                window.grubNPCs.seatPlayerAt(pickResult.pickedMesh);
+                            }
+                        }
+                        return;
+                    }
+
+                    // Left click while not holding object: Try to pick up an existing object
 
                     if (type) {
                         // Immediately remove it from the backend

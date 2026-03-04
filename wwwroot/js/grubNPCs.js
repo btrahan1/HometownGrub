@@ -3,6 +3,8 @@ window.grubNPCs = {
     waiters: [],
     waitingLine: [],
     cashier: null,
+    activeOrderWaiter: null,
+    playerAvatar: null,
 
     init: function (scene) {
         this.scene = scene;
@@ -109,6 +111,7 @@ window.grubNPCs = {
         npcRoot.targetPos = null;
         npcRoot.speed = 0.03 + (Math.random() * 0.02);
         npcRoot.isWalking = false;
+        npcRoot.isTakingOrder = false;
 
         return npcRoot;
     },
@@ -117,6 +120,11 @@ window.grubNPCs = {
         if (this.cashier) {
             this.cashier.dispose();
             this.cashier = null;
+        }
+
+        if (this.playerAvatar) {
+            this.playerAvatar.dispose();
+            this.playerAvatar = null;
         }
 
         this.waiters.forEach(w => w.dispose());
@@ -183,11 +191,17 @@ window.grubNPCs = {
                 const dist = BABYLON.Vector3.Distance(npc.position, npc.targetPos);
 
                 if (dist < 0.5) {
-                    // Reached target, pause then pick new
+                    // Reached target
                     npc.isWalking = false;
-                    setTimeout(() => {
-                        this.pickNewWanderTarget(npc);
-                    }, 2000 + (Math.random() * 3000));
+
+                    if (!npc.isTakingOrder) {
+                        // Pause then pick new if not locked in an order
+                        setTimeout(() => {
+                            if (!npc.isTakingOrder) {
+                                this.pickNewWanderTarget(npc);
+                            }
+                        }, 2000 + (Math.random() * 3000));
+                    }
                 } else {
                     // Move forward
                     const dir = npc.targetPos.subtract(npc.position).normalize();
@@ -195,5 +209,85 @@ window.grubNPCs = {
                 }
             }
         });
+    },
+
+    seatPlayerAt: function (targetMesh) {
+        if (this.playerAvatar) {
+            this.playerAvatar.dispose();
+            this.playerAvatar = null;
+        }
+
+        if (!targetMesh) return;
+
+        // Position avatar roughly at the clicked mesh (using world coordinates)
+        const pos = targetMesh.getAbsolutePosition().clone();
+
+        // Face the same general direction
+        let rotY = (targetMesh.rotation && targetMesh.rotation.y) ? targetMesh.rotation.y : (targetMesh.parentRotY || 0);
+        const type = targetMesh.parentAssetType;
+
+        // Apply a seating offset so the avatar doesn't spawn directly inside the table
+        if (type === "table_standard") {
+            // Standard tables: sit 1 unit back (like a chair)
+            // If rotY is 0, back is -Z
+            pos.x -= Math.sin(rotY) * 1.2;
+            pos.z -= Math.cos(rotY) * 1.2;
+            // Face the table
+            rotY += Math.PI;
+        } else if (type === "booth") {
+            // Booths: the table is in the middle, seats are on the sides (usually X axis relative)
+            pos.x -= Math.cos(rotY) * 0.8;
+            pos.z += Math.sin(rotY) * 0.8;
+            // Face the center of the booth table
+            rotY += Math.PI / 2;
+        } else if (type === "chair_wooden" || type === "checkout_counter") {
+            // Fallback for chairs and counters
+            pos.x -= Math.sin(rotY) * 0.5;
+            pos.z -= Math.cos(rotY) * 0.5;
+        }
+
+        // Spawn player with a distinct blue shirt and khakis
+        this.playerAvatar = this.spawnNPC("Owner", "#2980B9", "#F5DEB3", pos, rotY);
+
+        // Sink the avatar down to make it look like they are sitting
+        this.playerAvatar.position.y -= 0.6;
+
+        // Optional: remove legs or rotate them, but sinking them into the object is a good enough v1 illusion
+
+        // The player just sat down, physically dispatch a waiter to them
+        // Send waiter to the table's absolute origin, not the offset seat
+        this.dispatchWaiterToTable(targetMesh.getAbsolutePosition());
+    },
+
+    dispatchWaiterToTable: function (tablePos) {
+        if (!this.waiters || this.waiters.length === 0 || !tablePos) return;
+
+        // Pick a random waiter to be the active one
+        const waiter = this.waiters[Math.floor(Math.random() * this.waiters.length)];
+        this.activeOrderWaiter = waiter;
+        waiter.isTakingOrder = true;
+
+        // We want the waiter to stand near the table, but not directly on top of the player
+        // Assuming the player sits at -Z relative to the table, we'll send the waiter to +Z or +X
+        let tx = tablePos.x + 1.5;
+        let tz = tablePos.z + 1.5;
+        const targetPos = new BABYLON.Vector3(tx, 0, tz);
+
+        waiter.targetPos = targetPos;
+
+        // Rotate NPC to face the center of the table directly
+        const dx = tablePos.x - targetPos.x;
+        const dz = tablePos.z - targetPos.z;
+        waiter.rotation.y = Math.atan2(dx, dz);
+
+        waiter.isWalking = true;
+    },
+
+    dismissWaiter: function () {
+        if (this.activeOrderWaiter) {
+            this.activeOrderWaiter.isTakingOrder = false;
+            this.pickNewWanderTarget(this.activeOrderWaiter);
+            this.activeOrderWaiter = null;
+        }
     }
 };

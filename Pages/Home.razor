@@ -278,7 +278,7 @@
                         <h2 style="font-family: 'Georgia', serif; color: #8b4513; border-bottom: 2px dashed #8b4513; padding-bottom: 5px; margin-top: 0;">@leftPage.Title</h2>
                         @foreach(var item in leftPage.Items)
                         {
-                            <div style="margin-bottom: 20px;">
+                            <div style="margin-bottom: 20px; cursor: pointer;" title="Double-Click to Order" @ondblclick="() => AddToOrder(item)">
                                 <div style="display: flex; justify-content: space-between; align-items: flex-end;">
                                     <h4 style="margin: 0; font-family: 'Segoe UI', Tahoma, Arial; color: #333; font-size: 1.1rem;">@item.Name</h4>
                                     <div style="flex-grow: 1; border-bottom: 1px dotted #999; margin: 0 10px 5px 10px;"></div>
@@ -298,7 +298,7 @@
                         <h2 style="font-family: 'Georgia', serif; color: #8b4513; border-bottom: 2px dashed #8b4513; padding-bottom: 5px; margin-top: 0;">@rightPage.Title</h2>
                         @foreach(var item in rightPage.Items)
                         {
-                            <div style="margin-bottom: 20px;">
+                            <div style="margin-bottom: 20px; cursor: pointer;" title="Double-Click to Order" @ondblclick="() => AddToOrder(item)">
                                 <div style="display: flex; justify-content: space-between; align-items: flex-end;">
                                     <h4 style="margin: 0; font-family: 'Segoe UI', Tahoma, Arial; color: #333; font-size: 1.1rem;">@item.Name</h4>
                                     <div style="flex-grow: 1; border-bottom: 1px dotted #999; margin: 0 10px 5px 10px;"></div>
@@ -333,6 +333,35 @@
                     {
                         <div></div>
                     }
+                </div>
+
+                <!-- Waitpad / Order Summary UI -->
+                <div style="position: absolute; right: -250px; top: 20px; width: 220px; background: #FFF9E6; border: 2px solid #D4C3A3; border-radius: 5px; box-shadow: 2px 5px 15px rgba(0,0,0,0.5); padding: 15px; font-family: 'Segoe UI', Tahoma, sans-serif;" @onclick:stopPropagation="true">
+                    <h3 style="margin-top: 0; border-bottom: 2px solid #ccc; padding-bottom: 5px; color: #333; text-align: center;">Waitpad</h3>
+                    
+                    <div style="min-height: 150px; max-height: 300px; overflow-y: auto; margin-bottom: 15px;">
+                        @if (currentOrder.Count == 0)
+                        {
+                            <div style="color: #999; font-style: italic; text-align: center; margin-top: 20px; font-size: 0.9rem;">(Double-click menu items to order)</div>
+                        }
+                        else
+                        {
+                            @foreach(var o in currentOrder)
+                            {
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px; border-bottom: 1px dashed #eee; padding-bottom: 2px;">
+                                    <div style="font-size: 0.9rem; color: #444; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;">@o.Name</div>
+                                    <div style="font-size: 0.9rem; color: #27ae60; font-weight: bold;">@o.Price</div>
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    <div style="border-top: 2px solid #333; padding-top: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; font-weight: bold;">
+                        <span>Total:</span>
+                        <span style="color: #27ae60;">$@currentOrderTotal.ToString("0.00")</span>
+                    </div>
+
+                    <button class="grub-btn grub-btn-primary" style="width: 100%; padding: 8px; font-size: 1rem; background-color: #27ae60; border-color: #27ae60;" @onclick="CompleteOrder">Done Ordering</button>
                 </div>
             </div>
         </div>
@@ -395,6 +424,18 @@
     private RestaurantMenu? restaurantMenu;
     private bool showMenuBook = false;
     private int currentMenuPage = 0;
+
+    // Order State
+    private List<MenuItem> currentOrder = new();
+    private decimal currentOrderTotal => currentOrder.Sum(i => ParsePrice(i.Price));
+    
+    private decimal ParsePrice(string priceStr)
+    {
+        if (string.IsNullOrWhiteSpace(priceStr)) return 0;
+        var clean = priceStr.Replace("$", "").Trim();
+        if (decimal.TryParse(clean, out var val)) return val;
+        return 0;
+    }
 
     // Multi-Save State Logic
     private bool isRestaurantLoaded = false;
@@ -636,15 +677,31 @@
         await JSRuntime.InvokeVoidAsync("window.grubEngine.setWalls", currentWalls, currentWallColor);
     }
 
-    private void OpenMenuBook()
+    private async Task OpenMenuBook()
     {
         showMenuBook = true;
         currentMenuPage = 0; // 0 means Cover on Left, Page 1 on Right.
+        currentOrder.Clear();
     }
 
-    private void CloseMenuBook()
+    private async Task CloseMenuBook()
     {
         showMenuBook = false;
+        await JSRuntime.InvokeVoidAsync("window.grubNPCs.dismissWaiter");
+    }
+
+    private void AddToOrder(MenuItem item)
+    {
+        currentOrder.Add(item);
+    }
+
+    private async Task CompleteOrder()
+    {
+        // Reward funds for completing an order to roleplay running the restaurant
+        funds += (int)currentOrderTotal;
+        await SaveState();
+        currentOrder.Clear();
+        await CloseMenuBook();
     }
 
     private void NextMenuPage()
