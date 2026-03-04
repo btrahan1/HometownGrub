@@ -1,0 +1,19 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+C:\Users\bartt\.gemini\antigravity\scratch\HometownGrub\Pages\Home.razor(84,5): error RZ9981: Unexpected closing tag 'div' with no matching start tag. [C:\Users\bartt\.gemini\antigravity\scratch\HometownGrub\HometownGrub.csproj]
+C:\Users\bartt\.gemini\antigravity\scratch\HometownGrub\Pages\Home.razor(84,7): error RZ1026: Encountered end tag "div" with no matching start tag.  Are your start/end tags properly balanced? [C:\Users\bartt\.gemini\antigravity\scratch\HometownGrub\HometownGrub.csproj]
+C:\Users\bartt\.gemini\antigravity\scratch\HometownGrub\Pages\Home.razor(370,62): warning CS8618: Non-nullable field 'OnBuildingPlacedAction' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the field as nullable. [C:\Users\bartt\.gemini\antigravity\scratch\HometownGrub\HometownGrub.csproj]
+C:\Users\bartt\.gemini\antigravity\scratch\HometownGrub\Pages\Home.razor(371,47): warning CS8618: Non-nullable field 'OnBuildingRemovedAction' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the field as nullable. [C:\Users\bartt\.gemini\antigravity\scratch\HometownGrub\HometownGrub.csproj]
+
+Build FAILED.
+
+C:\Users\bartt\.gemini\antigravity\scratch\HometownGrub\Pages\Home.razor(370,62): warning CS8618: Non-nullable field 'OnBuildingPlacedAction' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the field as nullable. [C:\Users\bartt\.gemini\antigravity\scratch\HometownGrub\HometownGrub.csproj]
+C:\Users\bartt\.gemini\antigravity\scratch\HometownGrub\Pages\Home.razor(371,47): warning CS8618: Non-nullable field 'OnBuildingRemovedAction' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the field as nullable. [C:\Users\bartt\.gemini\antigravity\scratch\HometownGrub\HometownGrub.csproj]
+C:\Users\bartt\.gemini\antigravity\scratch\HometownGrub\Pages\Home.razor(84,5): error RZ9981: Unexpected closing tag 'div' with no matching start tag. [C:\Users\bartt\.gemini\antigravity\scratch\HometownGrub\HometownGrub.csproj]
+C:\Users\bartt\.gemini\antigravity\scratch\HometownGrub\Pages\Home.razor(84,7): error RZ1026: Encountered end tag "div" with no matching start tag.  Are your start/end tags properly balanced? [C:\Users\bartt\.gemini\antigravity\scratch\HometownGrub\HometownGrub.csproj]
+    2 Warning(s)
+    2 Error(s)
+
+Time Elapsed 00:00:01.17
+
+Workload updates are available. Run `dotnet workload list` for more information.

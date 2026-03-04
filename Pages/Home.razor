@@ -29,6 +29,10 @@
                         <span style="color: #ccc; font-family: 'Segoe UI', sans-serif;">Already have a restaurant?</span><br/>
                         <button class="grub-btn grub-btn-secondary" style="margin-top: 10px;" @onclick="() => { isEditingExisting = true; loginError = string.Empty; }">Edit Existing Restaurant</button>
                     </div>
+
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button class="grub-btn grub-btn-secondary" style="background-color: #27ae60; border-color: #27ae60;" @onclick="ShowMapModal">🌍 Restaurants Near Me</button>
+                    </div>
                 </div>
             }
             else
@@ -63,6 +67,19 @@
                 </div>
             }
         </div>
+
+        @if (isMapVisible)
+        {
+            <div style="position: absolute; top:0; left:0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 300; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <div style="background: white; padding: 20px; border-radius: 10px; width: 80%; height: 80%; display: flex; flex-direction: column;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2 style="margin: 0; color: #333; font-family: 'Segoe UI', sans-serif;">Restaurants Near Me</h2>
+                        <button class="grub-btn grub-btn-secondary" style="background-color: #e74c3c; border: none; padding: 5px 15px;" @onclick="HideMapModal">Close View</button>
+                    </div>
+                    <div id="grubMapContainer" style="flex-grow: 1; border-radius: 8px; border: 2px solid #ccc;"></div>
+                </div>
+            </div>
+        }
     </div>
 }
 
@@ -416,6 +433,24 @@
     {
         var json = System.Text.Json.JsonSerializer.Serialize(restaurantIndex);
         await JSRuntime.InvokeVoidAsync("localStorage.setItem", "hometownGrub_Index", json);
+    }
+
+    private bool isMapVisible = false;
+
+    private async Task ShowMapModal()
+    {
+        isMapVisible = true;
+        StateHasChanged();
+        
+        // Give the DOM a tiny moment to render the modal div before attaching Leaflet to it
+        await Task.Delay(100);
+        await JSRuntime.InvokeVoidAsync("window.grubMap.initMap", "grubMapContainer");
+    }
+
+    private void HideMapModal()
+    {
+        isMapVisible = false;
+        StateHasChanged();
     }
 
     private async Task CreateNewRestaurant()
