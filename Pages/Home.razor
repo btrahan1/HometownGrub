@@ -139,6 +139,29 @@
     <!-- Main Toolbar Right -->
     <div style="position: absolute; top: 80px; right: 20px; display: flex; flex-direction: column; gap: 15px; z-index: 10; background: rgba(0,0,0,0.6); padding: 15px; border-radius: 8px; max-height: 80vh; overflow-y: auto; width: 250px;">
         
+        <!-- Default Layouts Section -->
+        <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #777; padding-bottom: 5px; cursor: pointer;" @onclick='() => showDefaultLayouts = !showDefaultLayouts'>
+                <h3 style="color: white; margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 1.2rem;">Default Layouts</h3>
+                <span style="color: white;">@(showDefaultLayouts ? "▼" : "▶")</span>
+            </div>
+            
+            @if (showDefaultLayouts)
+            {
+                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+                    <button class="grub-btn grub-btn-secondary" style="background-color: #3498db; border-color: #2980b9;" @onclick='() => LoadDefaultLayout(1)'>
+                        Layout 1 (Mixed)
+                    </button>
+                    <button class="grub-btn grub-btn-secondary" style="background-color: #3498db; border-color: #2980b9;" @onclick='() => LoadDefaultLayout(2)'>
+                        Layout 2 (Booths)
+                    </button>
+                    <button class="grub-btn grub-btn-secondary" style="background-color: #3498db; border-color: #2980b9;" @onclick='() => LoadDefaultLayout(3)'>
+                        Layout 3 (Tables)
+                    </button>
+                </div>
+            }
+        </div>
+
         <!-- Items Section -->
         <div>
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #777; padding-bottom: 5px; cursor: pointer;" @onclick='() => showItems = !showItems'>
@@ -365,6 +388,7 @@
     private bool showFloors = false;
     private bool showWalls = false;
     private bool showMenuConfig = false;
+    private bool showDefaultLayouts = false;
 
     // Menu Book State
     private string selectedMenuFile = "tgi_fridays_menu.json";
@@ -646,6 +670,77 @@
         {
             await JSRuntime.InvokeVoidAsync("window.grubEngine.startPlacementMode", assetId);
         }
+    }
+
+    private async Task LoadDefaultLayout(int layoutId)
+    {
+        // Reset funds and clear current items
+        funds = 5000;
+        placedItems.Clear();
+
+        // Every layout gets a checkout counter by the door
+        placedItems.Add(new BuildingData
+        {
+            Type = "checkout_counter",
+            X = 0,
+            Y = 0,
+            Z = -8,
+            RotY = 0
+        });
+
+        if (layoutId == 1)
+        {
+            // Layout 1: Mixed (Booths on edges, tables in center)
+            // Left Booths
+            for (int z = -2; z <= 6; z += 4)
+            {
+                placedItems.Add(new BuildingData { Type = "booth", X = -10, Y = 0, Z = z, RotY = (float)(Math.PI / 2) });
+            }
+            // Right Booths
+            for (int z = -2; z <= 6; z += 4)
+            {
+                placedItems.Add(new BuildingData { Type = "booth", X = 10, Y = 0, Z = z, RotY = (float)(-Math.PI / 2) });
+            }
+            // Center Tables
+            for (int z = -2; z <= 6; z += 4)
+            {
+                placedItems.Add(new BuildingData { Type = "table_standard", X = -4, Y = 0, Z = z, RotY = 0 });
+                placedItems.Add(new BuildingData { Type = "chair_wooden", X = -4, Y = 0, Z = z - 1, RotY = 0 });
+                placedItems.Add(new BuildingData { Type = "chair_wooden", X = -4, Y = 0, Z = z + 1, RotY = (float)Math.PI });
+
+                placedItems.Add(new BuildingData { Type = "table_standard", X = 4, Y = 0, Z = z, RotY = 0 });
+                placedItems.Add(new BuildingData { Type = "chair_wooden", X = 4, Y = 0, Z = z - 1, RotY = 0 });
+                placedItems.Add(new BuildingData { Type = "chair_wooden", X = 4, Y = 0, Z = z + 1, RotY = (float)Math.PI });
+            }
+        }
+        else if (layoutId == 2)
+        {
+            // Layout 2: purely booths
+            for (int x = -10; x <= 10; x += 10)
+            {
+                for (int z = -2; z <= 6; z += 4)
+                {
+                    placedItems.Add(new BuildingData { Type = "booth", X = x, Y = 0, Z = z, RotY = (float)((x < 0) ? Math.PI / 2 : -Math.PI / 2) });
+                }
+            }
+        }
+        else if (layoutId == 3)
+        {
+            // Layout 3: purely tables & chairs
+            for (int x = -10; x <= 10; x += 5)
+            {
+                for (int z = -2; z <= 8; z += 5)
+                {
+                    placedItems.Add(new BuildingData { Type = "table_standard", X = x, Y = 0, Z = z, RotY = 0 });
+                    placedItems.Add(new BuildingData { Type = "chair_wooden", X = x, Y = 0, Z = z - 1, RotY = 0 });
+                    placedItems.Add(new BuildingData { Type = "chair_wooden", X = x, Y = 0, Z = z + 1, RotY = (float)Math.PI });
+                }
+            }
+        }
+
+        await SaveState();
+        await JSRuntime.InvokeVoidAsync("window.grubEngine.loadBuildings", placedItems);
+        StateHasChanged();
     }
 
     private async Task OnFloorColorChanged(ChangeEventArgs e)

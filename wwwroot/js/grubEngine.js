@@ -49,10 +49,27 @@ window.grubEngine = {
 
         this.scene.onPointerDown = (evt, pickResult) => {
             if (evt.button === 0 && this.placementMode && this.previewMesh && pickResult.hit) {
+                // Left click while holding object: Place it
                 this.placeCurrentObject();
+            } else if (evt.button === 0 && !this.placementMode && pickResult.hit) {
+                // Left click while not holding object: Try to pick up an existing object
+                if (pickResult.pickedMesh && pickResult.pickedMesh.name !== "ground" && pickResult.pickedMesh.parentObjectKey) {
+                    const type = pickResult.pickedMesh.parentAssetType;
+                    const rot = pickResult.pickedMesh.parentRotY;
+                    const key = pickResult.pickedMesh.parentObjectKey;
+
+                    if (type) {
+                        // Immediately remove it from the backend
+                        this.removeObject(key);
+                        // Start holding it again, preserving rotation
+                        this.startPlacementMode(type, rot);
+                    }
+                }
             } else if (evt.button === 2 && this.placementMode) {
+                // Right click while holding: Cancel placement
                 this.cancelPlacement();
             } else if (evt.button === 2 && !this.placementMode) {
+                // Right click while not holding: Delete existing object
                 if (pickResult.hit && pickResult.pickedMesh && pickResult.pickedMesh.name !== "ground" && pickResult.pickedMesh.parentObjectKey) {
                     this.removeObject(pickResult.pickedMesh.parentObjectKey);
                 }
@@ -115,15 +132,16 @@ window.grubEngine = {
         }
     },
 
-    startPlacementMode: function (assetId) {
+    startPlacementMode: function (assetId, initialRotation = 0) {
         if (!this.assetDefinitions[assetId]) return;
         this.cancelPlacement();
 
         this.currentPlacementType = assetId;
         this.placementMode = true;
-        this.previewRotation = 0;
+        this.previewRotation = initialRotation;
 
         this.previewMesh = this.buildProceduralMesh(assetId, true);
+        this.previewMesh.rotation.y = initialRotation;
         this.previewMesh.position.y = 0;
     },
 
@@ -176,9 +194,15 @@ window.grubEngine = {
                 mesh.position.z = b.z;
                 mesh.rotation.y = b.rotY;
                 mesh.parentObjectKey = `p_${b.x}_${b.z}`;
+                mesh.parentAssetType = b.type;
+                mesh.parentRotY = b.rotY;
 
-                // assign key to children for raycasting
-                mesh.getChildMeshes().forEach(c => c.parentObjectKey = mesh.parentObjectKey);
+                // assign key and metadata to children for raycasting
+                mesh.getChildMeshes().forEach(c => {
+                    c.parentObjectKey = mesh.parentObjectKey;
+                    c.parentAssetType = mesh.parentAssetType;
+                    c.parentRotY = mesh.parentRotY;
+                });
 
                 this.placedObjects.push(mesh);
 
