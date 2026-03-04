@@ -1,0 +1,24 @@
+{
+    "blueprints": [
+        {
+            "id": "table_standard",
+            "name": "Standard Dining Table",
+            "recipe": "data/table_standard.json"
+        },
+        {
+            "id": "chair_wooden",
+            "name": "Wooden Dining Chair",
+            "recipe": "data/chair_wooden.json"
+        },
+        {
+            "id": "booth",
+            "name": "Dining Booth",
+            "recipe": "data/booth.json"
+        },
+        {
+            "id": "checkout_counter",
+            "name": "Checkout Counter",
+            "recipe": "data/checkout_counter.json"
+        }
+    ]
+}

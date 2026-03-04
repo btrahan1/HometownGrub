@@ -1,0 +1,214 @@
+{
+    "Name": "ModernRestaurantChair",
+    "Type": "Procedural",
+    "Parts": [
+        {
+            "Id": "seat_cushion",
+            "ParentId": null,
+            "Shape": "Box",
+            "Position": [
+                0.0,
+                0.45,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.45,
+                0.05,
+                0.45
+            ],
+            "ColorHex": "#2A2A2A",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_front_left",
+            "ParentId": null,
+            "Shape": "Cylinder",
+            "Position": [
+                0.2,
+                0.225,
+                0.2
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.03,
+                0.45,
+                0.03
+            ],
+            "ColorHex": "#888888",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_front_right",
+            "ParentId": null,
+            "Shape": "Cylinder",
+            "Position": [
+                -0.2,
+                0.225,
+                0.2
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.03,
+                0.45,
+                0.03
+            ],
+            "ColorHex": "#888888",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_back_left",
+            "ParentId": null,
+            "Shape": "Cylinder",
+            "Position": [
+                0.2,
+                0.475,
+                -0.2
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.03,
+                0.95,
+                0.03
+            ],
+            "ColorHex": "#888888",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_back_right",
+            "ParentId": null,
+            "Shape": "Cylinder",
+            "Position": [
+                -0.2,
+                0.475,
+                -0.2
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.03,
+                0.95,
+                0.03
+            ],
+            "ColorHex": "#888888",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "backrest_top_rail",
+            "ParentId": null,
+            "Shape": "Box",
+            "Position": [
+                0.0,
+                0.925,
+                -0.2
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.4,
+                0.05,
+                0.03
+            ],
+            "ColorHex": "#888888",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "backrest_panel",
+            "ParentId": null,
+            "Shape": "Box",
+            "Position": [
+                0.0,
+                0.75,
+                -0.2
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.38,
+                0.3,
+                0.02
+            ],
+            "ColorHex": "#2A2A2A",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "crossbar_front",
+            "ParentId": null,
+            "Shape": "Cylinder",
+            "Position": [
+                0.0,
+                0.15,
+                0.2
+            ],
+            "Rotation": [
+                0,
+                0,
+                90
+            ],
+            "Scale": [
+                0.02,
+                0.4,
+                0.02
+            ],
+            "ColorHex": "#888888",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "crossbar_back",
+            "ParentId": null,
+            "Shape": "Cylinder",
+            "Position": [
+                0.0,
+                0.15,
+                -0.2
+            ],
+            "Rotation": [
+                0,
+                0,
+                90
+            ],
+            "Scale": [
+                0.02,
+                0.4,
+                0.02
+            ],
+            "ColorHex": "#888888",
+            "Material": "Metal",
+            "Operation": "Union"
+        }
+    ],
+    "Timeline": []
+}

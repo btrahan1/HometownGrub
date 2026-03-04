@@ -1,0 +1,76 @@
+{
+    "restaurantName": "Hometown Grub",
+    "theme": "dark",
+    "pages": [
+        {
+            "title": "Appetizers",
+            "items": [
+                {
+                    "name": "Loaded Potato Skins",
+                    "description": "Crispy skins loaded with melted cheddar, bacon, and green onions. Served with sour cream.",
+                    "price": "$10.99"
+                },
+                {
+                    "name": "Mozzarella Sticks",
+                    "description": "Golden fried and served with our tangy marinara sauce.",
+                    "price": "$9.49"
+                },
+                {
+                    "name": "Classic Buffalo Wings",
+                    "description": "Tossed in fiery Buffalo sauce and served with celery and blue cheese dressing.",
+                    "price": "$14.99"
+                }
+            ]
+        },
+        {
+            "title": "Burgers & Sandwiches",
+            "items": [
+                {
+                    "name": "The Hometown Classic Burger",
+                    "description": "A juicy 100% beef patty topped with American cheese, lettuce, tomato, onions, and pickles.",
+                    "price": "$12.99"
+                },
+                {
+                    "name": "Whiskey-Glazed Bacon Burger",
+                    "description": "Signature whiskey-glaze, bacon, cheddar, lettuce, tomato, and onion.",
+                    "price": "$15.49"
+                },
+                {
+                    "name": "Crispy Chicken Sandwich",
+                    "description": "Golden fried chicken breast, pickles, and mayo on a toasted bun.",
+                    "price": "$13.99"
+                }
+            ]
+        },
+        {
+            "title": "Steaks & Ribs",
+            "items": [
+                {
+                    "name": "Full Rack Baby Back Ribs",
+                    "description": "Slow-cooked, fall-off-the-bone tender baby back pork ribs basted in tangy BBQ sauce.",
+                    "price": "$28.99"
+                },
+                {
+                    "name": "Center-Cut Sirloin",
+                    "description": "8 oz. seasoned sirloin steak fire-grilled to perfection. Served with mashed potatoes.",
+                    "price": "$22.99"
+                }
+            ]
+        },
+        {
+            "title": "Desserts",
+            "items": [
+                {
+                    "name": "Brownie Obsession",
+                    "description": "A warm brownie covered in chocolate fudge, vanilla ice cream, caramel sauce and pecans.",
+                    "price": "$8.49"
+                },
+                {
+                    "name": "NY Style Cheesecake",
+                    "description": "Classic creamy cheesecake topped with fresh strawberry puree.",
+                    "price": "$7.99"
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,76 @@
+{
+    "Name": "Restaurant_Bistro_Table",
+    "Type": "Procedural",
+    "Parts": [
+        {
+            "Id": "table_base",
+            "ParentId": null,
+            "Shape": "Cylinder",
+            "Position": [
+                0.0,
+                0.02,
+                0.0
+            ],
+            "Rotation": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "Scale": [
+                0.6,
+                0.04,
+                0.6
+            ],
+            "ColorHex": "#1A1A1A",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "table_leg",
+            "ParentId": null,
+            "Shape": "Cylinder",
+            "Position": [
+                0.0,
+                0.39,
+                0.0
+            ],
+            "Rotation": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "Scale": [
+                0.08,
+                0.7,
+                0.08
+            ],
+            "ColorHex": "#2F2F2F",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "table_top",
+            "ParentId": null,
+            "Shape": "Box",
+            "Position": [
+                0.0,
+                0.76,
+                0.0
+            ],
+            "Rotation": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "Scale": [
+                1.0,
+                0.04,
+                1.0
+            ],
+            "ColorHex": "#F5F5DC",
+            "Material": "Plastic",
+            "Operation": "Union"
+        }
+    ],
+    "Timeline": []
+}

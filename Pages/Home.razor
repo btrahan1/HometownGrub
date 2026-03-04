@@ -1,0 +1,435 @@
+﻿@page "/"
+@using HometownGrub.Models
+@inject IJSRuntime JSRuntime
+@inject HttpClient Http
+
+<PageTitle>HometownGrub</PageTitle>
+
+<div style="width: 100vw; height: 100vh; overflow: hidden; margin: 0; padding: 0; position: relative; background: #333;">
+    <canvas id="renderCanvas" style="width: 100%; height: 100%; touch-action: none; outline: none;"></canvas>
+    
+    <!-- Top Bar -->
+    <div style="position: absolute; top: 0; left: 0; right: 0; height: 60px; background: rgba(0,0,0,0.8); display: flex; align-items: center; padding: 0 20px; z-index: 10;">
+        <h1 style="color: #fff; margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 1.5rem; letter-spacing: 2px;">HOMETOWN GRUB - DESIGNER</h1>
+        <div style="flex-grow: 1;"></div>
+        <button class="grub-btn grub-btn-primary" style="margin-right: 20px; padding: 5px 15px; font-size: 1.1rem; background-color: #8b4513;" @onclick="OpenMenuBook">
+            📖 View Menu
+        </button>
+        <div style="color: #4CAF50; font-weight: bold; font-size: 1.2rem;">
+            Funds: $@funds
+        </div>
+    </div>
+
+    <!-- Information Overlay -->
+    <div style="position: absolute; top: 80px; left: 20px; z-index: 10;">
+        <div style="background: rgba(0,0,0,0.6); padding: 10px; border-radius: 5px; color: #ddd; font-size: 0.9rem;">
+            <p style="margin: 0 0 5px 0;"><strong>Controls:</strong></p>
+            <ul style="margin: 0; padding-left: 20px;">
+                <li>Left Click: Place</li>
+                <li>Right Click: Cancel/Delete</li>
+                <li>R: Rotate 90°</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Main Toolbar Right -->
+    <div style="position: absolute; top: 80px; right: 20px; display: flex; flex-direction: column; gap: 15px; z-index: 10; background: rgba(0,0,0,0.6); padding: 15px; border-radius: 8px; max-height: 80vh; overflow-y: auto; width: 250px;">
+        
+        <!-- Items Section -->
+        <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #777; padding-bottom: 5px; cursor: pointer;" @onclick='() => showItems = !showItems'>
+                <h3 style="color: white; margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 1.2rem;">Place Items</h3>
+                <span style="color: white;">@(showItems ? "▼" : "▶")</span>
+            </div>
+            
+            @if (showItems)
+            {
+                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+                    <button class="grub-btn grub-btn-primary" @onclick='() => StartPlacement("table_standard")'>
+                        🪑 Bistro Table ($@COST_TABLE)
+                    </button>
+                    <button class="grub-btn grub-btn-primary" @onclick='() => StartPlacement("chair_wooden")'>
+                        🪑 Modern Chair ($@COST_CHAIR)
+                    </button>
+                    <button class="grub-btn grub-btn-primary" @onclick='() => StartPlacement("booth")'>
+                        🛋️ Booth ($@COST_BOOTH)
+                    </button>
+                    <button class="grub-btn grub-btn-primary" @onclick='() => StartPlacement("checkout_counter")'>
+                        🛒 Checkout Counter ($@COST_COUNTER)
+                    </button>
+                </div>
+            }
+        </div>
+
+        <!-- Flooring Section -->
+        <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #777; padding-bottom: 5px; cursor: pointer;" @onclick='() => showFloors = !showFloors'>
+                <h3 style="color: white; margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 1.2rem;">Flooring</h3>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <input type="color" value="@currentFloorColor" @onchange="OnFloorColorChanged" @onclick:stopPropagation="true" style="width: 25px; height: 25px; border: none; cursor: pointer; padding: 0; background: transparent;" title="Pick Floor Color" />
+                    <span style="color: white;">@(showFloors ? "▼" : "▶")</span>
+                </div>
+            </div>
+            
+            @if (showFloors)
+            {
+                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+                    <button class="grub-btn grub-btn-secondary" @onclick='() => SetFlooring("Concrete")'>🧱 Concrete</button>
+                    <button class="grub-btn grub-btn-secondary" @onclick='() => SetFlooring("Wooden")'>🪵 Wooden</button>
+                    <button class="grub-btn grub-btn-secondary" @onclick='() => SetFlooring("Carpet")'>🧶 Carpet</button>
+                    <button class="grub-btn grub-btn-secondary" @onclick='() => SetFlooring("Linoleum")'>✨ Linoleum</button>
+                </div>
+            }
+        </div>
+
+        <!-- Walls Section -->
+        <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #777; padding-bottom: 5px; cursor: pointer;" @onclick='() => showWalls = !showWalls'>
+                <h3 style="color: white; margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 1.2rem;">Walls</h3>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <input type="color" value="@currentWallColor" @onchange="OnWallColorChanged" @onclick:stopPropagation="true" style="width: 25px; height: 25px; border: none; cursor: pointer; padding: 0; background: transparent;" title="Pick Wall Color" />
+                    <span style="color: white;">@(showWalls ? "▼" : "▶")</span>
+                </div>
+            </div>
+            
+            @if (showWalls)
+            {
+                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+                    <button class="grub-btn grub-btn-secondary" @onclick='() => SetWalls("Brick")'>🧱 Brick</button>
+                    <button class="grub-btn grub-btn-secondary" @onclick='() => SetWalls("Plaster")'>🏠 Plaster</button>
+                    <button class="grub-btn grub-btn-secondary" @onclick='() => SetWalls("WoodPanel")'>🪵 Wood Paneling</button>
+                    <button class="grub-btn grub-btn-secondary" @onclick='() => SetWalls("Paint")'>🖌️ Flat Paint</button>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Menu Book Overlay -->
+    @if (showMenuBook && restaurantMenu != null)
+    {
+        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 100; display: flex; justify-content: center; align-items: center;" @onclick="CloseMenuBook">
+            <div style="background: url('https://www.transparenttextures.com/patterns/aged-paper.png'), #f4e8d1; width: 800px; height: 500px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); display: flex; position: relative; border: 4px solid #5c3a21;" @onclick:stopPropagation="true">
+                
+                <!-- Close Button -->
+                <div style="position: absolute; top: -15px; right: -15px; background: #8b4513; color: white; width: 35px; height: 35px; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; font-weight: bold; font-size: 1.2rem; border: 2px solid #5c3a21; box-shadow: 0 2px 5px rgba(0,0,0,0.5);" @onclick="CloseMenuBook">X</div>
+
+                <!-- Book Binding Spine -->
+                <div style="position: absolute; top: 0; bottom: 0; left: 50%; width: 40px; margin-left: -20px; background: linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.2) 20%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.2) 80%, rgba(0,0,0,0) 100%); pointer-events: none; z-index: 2;"></div>
+
+                <!-- Left Page -->
+                <div style="flex: 1; padding: 30px; border-right: 1px solid rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow-y: auto;">
+                    @if (currentMenuPage == 0)
+                    {
+                        <div style="text-align: center; margin-top: 50px;">
+                            <h1 style="font-family: 'Georgia', serif; color: #5c3a21; font-size: 2.5rem; margin-bottom: 10px; text-transform: uppercase;">@restaurantMenu.RestaurantName</h1>
+                            <div style="height: 2px; background: #5c3a21; width: 50%; margin: 0 auto 20px auto;"></div>
+                            <h3 style="font-family: 'Segoe UI', sans-serif; color: #8b4513; font-style: italic;">Est. 2026</h3>
+                        </div>
+                    }
+                    else
+                    {
+                        var leftPage = restaurantMenu.Pages[currentMenuPage - 1];
+                        <h2 style="font-family: 'Georgia', serif; color: #8b4513; border-bottom: 2px dashed #8b4513; padding-bottom: 5px; margin-top: 0;">@leftPage.Title</h2>
+                        @foreach(var item in leftPage.Items)
+                        {
+                            <div style="margin-bottom: 20px;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                                    <h4 style="margin: 0; font-family: 'Segoe UI', Tahoma, Arial; color: #333; font-size: 1.1rem;">@item.Name</h4>
+                                    <div style="flex-grow: 1; border-bottom: 1px dotted #999; margin: 0 10px 5px 10px;"></div>
+                                    <h4 style="margin: 0; font-family: 'Segoe UI', Tahoma, Arial; color: #5c3a21;">@item.Price</h4>
+                                </div>
+                                <p style="margin: 5px 0 0 0; font-family: 'Georgia', serif; font-size: 0.9rem; color: #666; font-style: italic;">@item.Description</p>
+                            </div>
+                        }
+                    }
+                </div>
+
+                <!-- Right Page -->
+                <div style="flex: 1; padding: 30px; display: flex; flex-direction: column; overflow-y: auto;">
+                    @if (currentMenuPage < restaurantMenu.Pages.Count)
+                    {
+                        var rightPage = restaurantMenu.Pages[currentMenuPage];
+                        <h2 style="font-family: 'Georgia', serif; color: #8b4513; border-bottom: 2px dashed #8b4513; padding-bottom: 5px; margin-top: 0;">@rightPage.Title</h2>
+                        @foreach(var item in rightPage.Items)
+                        {
+                            <div style="margin-bottom: 20px;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                                    <h4 style="margin: 0; font-family: 'Segoe UI', Tahoma, Arial; color: #333; font-size: 1.1rem;">@item.Name</h4>
+                                    <div style="flex-grow: 1; border-bottom: 1px dotted #999; margin: 0 10px 5px 10px;"></div>
+                                    <h4 style="margin: 0; font-family: 'Segoe UI', Tahoma, Arial; color: #5c3a21;">@item.Price</h4>
+                                </div>
+                                <p style="margin: 5px 0 0 0; font-family: 'Georgia', serif; font-size: 0.9rem; color: #666; font-style: italic;">@item.Description</p>
+                            </div>
+                        }
+                    }
+                </div>
+
+                <!-- Pagination Controls -->
+                <div style="position: absolute; bottom: 15px; left: 0; right: 0; display: flex; justify-content: space-between; padding: 0 30px; pointer-events: none;">
+                    @if (currentMenuPage > 0)
+                    {
+                        <button style="pointer-events: auto; background: none; border: none; color: #8b4513; font-family: 'Georgia', serif; font-weight: bold; cursor: pointer; font-size: 1.1rem;" @onclick="PrevMenuPage">
+                            ← Previous Pages
+                        </button>
+                    }
+                    else
+                    {
+                        <div></div>
+                    }
+
+                    @if (currentMenuPage + 1 < restaurantMenu.Pages.Count)
+                    {
+                        <button style="pointer-events: auto; background: none; border: none; color: #8b4513; font-family: 'Georgia', serif; font-weight: bold; cursor: pointer; font-size: 1.1rem;" @onclick="NextMenuPage">
+                            Next Pages →
+                        </button>
+                    }
+                    else
+                    {
+                        <div></div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .grub-btn {
+        padding: 12px 20px;
+        font-size: 1.1rem;
+        cursor: pointer;
+        border: none;
+        border-radius: 8px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-weight: 600;
+        transition: all 0.2s;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }
+    .grub-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+    }
+    .grub-btn:active {
+        transform: translateY(1px);
+    }
+    .grub-btn-primary {
+        background-color: #f39c12;
+        color: #2c3e50;
+    }
+    .grub-btn-secondary {
+        background-color: #34495e;
+        color: #ecf0f1;
+    }
+</style>
+
+@code {
+    private int funds = 5000;
+    private const int COST_TABLE = 150;
+    private const int COST_CHAIR = 45;
+    private const int COST_BOOTH = 350;
+    private const int COST_COUNTER = 800;
+
+    private List<BuildingData> placedItems = new();
+    private string currentFlooring = "Concrete";
+    private string currentFloorColor = "#999999";
+    
+    private string currentWalls = "Paint";
+    private string currentWallColor = "#E0E0E0";
+
+    // UI Collapse State
+    private bool showItems = true;
+    private bool showFloors = false;
+    private bool showWalls = false;
+
+    // Menu Book State
+    private RestaurantMenu? restaurantMenu;
+    private bool showMenuBook = false;
+    private int currentMenuPage = 0;
+
+    public static Action<string, float, float, float, float> OnBuildingPlacedAction;
+    public static Action<float, float, float> OnBuildingRemovedAction;
+
+    [JSInvokable]
+    public static void OnBuildingPlaced(string type, float x, float y, float z, float rotY)
+    {
+        OnBuildingPlacedAction?.Invoke(type, x, y, z, rotY);
+    }
+
+    [JSInvokable]
+    public static void OnBuildingRemoved(float x, float y, float z)
+    {
+        OnBuildingRemovedAction?.Invoke(x, y, z);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        OnBuildingPlacedAction = HandleBuildingPlaced;
+        OnBuildingRemovedAction = HandleBuildingRemoved;
+        
+        try
+        {
+            restaurantMenu = await Http.GetFromJsonAsync<RestaurantMenu>("data/restaurant_menu.json");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Could not load restaurant menu JSON: " + ex.Message);
+        }
+    }
+
+    private void OpenMenuBook()
+    {
+        showMenuBook = true;
+        currentMenuPage = 0; // 0 means Cover on Left, Page 1 on Right.
+    }
+
+    private void CloseMenuBook()
+    {
+        showMenuBook = false;
+    }
+
+    private void NextMenuPage()
+    {
+        if (restaurantMenu != null && currentMenuPage + 1 < restaurantMenu.Pages.Count)
+        {
+            currentMenuPage += 2;
+        }
+    }
+
+    private void PrevMenuPage()
+    {
+        if (currentMenuPage >= 2)
+        {
+            currentMenuPage -= 2;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("window.grubEngine.init", "renderCanvas");
+            await LoadState();
+        }
+    }
+
+    private async Task StartPlacement(string assetId)
+    {
+        int cost = assetId == "checkout_counter" ? COST_COUNTER : assetId == "table_standard" ? COST_TABLE : assetId == "booth" ? COST_BOOTH : COST_CHAIR;
+        if (funds >= cost)
+        {
+            await JSRuntime.InvokeVoidAsync("window.grubEngine.startPlacementMode", assetId);
+        }
+    }
+
+    private async Task OnFloorColorChanged(ChangeEventArgs e)
+    {
+        currentFloorColor = e.Value?.ToString() ?? "#999999";
+        await JSRuntime.InvokeVoidAsync("window.grubEngine.setFlooring", currentFlooring, currentFloorColor);
+        await SaveState();
+    }
+
+    private async Task SetFlooring(string type)
+    {
+        currentFlooring = type;
+        
+        // Reset default colors if switching material types and user wants default look,
+        // or just apply the currently selected color over the top. Let's just apply the selected color always.
+        await JSRuntime.InvokeVoidAsync("window.grubEngine.setFlooring", currentFlooring, currentFloorColor);
+        await SaveState();
+    }
+
+    private async Task OnWallColorChanged(ChangeEventArgs e)
+    {
+        currentWallColor = e.Value?.ToString() ?? "#E0E0E0";
+        await JSRuntime.InvokeVoidAsync("window.grubEngine.setWalls", currentWalls, currentWallColor);
+        await SaveState();
+    }
+
+    private async Task SetWalls(string type)
+    {
+        currentWalls = type;
+        await JSRuntime.InvokeVoidAsync("window.grubEngine.setWalls", currentWalls, currentWallColor);
+        await SaveState();
+    }
+
+    private void HandleBuildingPlaced(string type, float x, float y, float z, float rotY)
+    {
+        int cost = type == "checkout_counter" ? COST_COUNTER : type == "table_standard" ? COST_TABLE : type == "booth" ? COST_BOOTH : COST_CHAIR;
+        if (funds >= cost)
+        {
+            funds -= cost;
+            placedItems.Add(new BuildingData { Type = type, X = x, Y = y, Z = z, RotY = rotY });
+            
+            _ = InvokeAsync(async () =>
+            {
+                await SaveState();
+                StateHasChanged();
+                await JSRuntime.InvokeVoidAsync("window.grubEngine.loadBuildings", placedItems);
+            });
+        }
+    }
+
+    private void HandleBuildingRemoved(float x, float y, float z)
+    {
+        var toRemove = placedItems.OrderBy(b => Math.Abs(b.X - x) + Math.Abs(b.Y - y) + Math.Abs(b.Z - z)).FirstOrDefault();
+        if (toRemove != null && Math.Abs(toRemove.X - x) < 0.1f)
+        {
+            placedItems.Remove(toRemove);
+            int refund = toRemove.Type == "checkout_counter" ? COST_COUNTER : toRemove.Type == "table_standard" ? COST_TABLE : toRemove.Type == "booth" ? COST_BOOTH : COST_CHAIR;
+            funds += refund;
+
+            _ = InvokeAsync(async () =>
+            {
+                await SaveState();
+                StateHasChanged();
+                await JSRuntime.InvokeVoidAsync("window.grubEngine.loadBuildings", placedItems);
+            });
+        }
+    }
+
+    private async Task SaveState()
+    {
+        var saveObj = new { 
+            Funds = funds, 
+            Items = placedItems, 
+            Flooring = currentFlooring, 
+            FloorColor = currentFloorColor,
+            Walls = currentWalls,
+            WallColor = currentWallColor
+        };
+        var json = System.Text.Json.JsonSerializer.Serialize(saveObj);
+        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "hometownGrubSave", json);
+    }
+
+    private async Task LoadState()
+    {
+        var json = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "hometownGrubSave");
+        if (!string.IsNullOrEmpty(json))
+        {
+            try
+            {
+                var dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, System.Text.Json.JsonElement>>(json);
+                if (dict != null)
+                {
+                    if (dict.TryGetValue("Funds", out var fundsEl)) funds = fundsEl.GetInt32();
+                    if (dict.TryGetValue("Flooring", out var floorEl)) currentFlooring = floorEl.GetString() ?? "Concrete";
+                    if (dict.TryGetValue("FloorColor", out var colorEl)) currentFloorColor = colorEl.GetString() ?? "#999999";
+                    if (dict.TryGetValue("Walls", out var wallsEl)) currentWalls = wallsEl.GetString() ?? "Paint";
+                    if (dict.TryGetValue("WallColor", out var wallColorEl)) currentWallColor = wallColorEl.GetString() ?? "#E0E0E0";
+                    if (dict.TryGetValue("Items", out var itemsEl))
+                    {
+                        placedItems = System.Text.Json.JsonSerializer.Deserialize<List<BuildingData>>(itemsEl.GetRawText()) ?? new();
+                    }
+                }
+                StateHasChanged();
+                await JSRuntime.InvokeVoidAsync("window.grubEngine.loadBuildings", placedItems);
+                await JSRuntime.InvokeVoidAsync("window.grubEngine.setFlooring", currentFlooring, currentFloorColor);
+                await JSRuntime.InvokeVoidAsync("window.grubEngine.setWalls", currentWalls, currentWallColor);
+            }
+            catch
+            {
+                // ignore
+            }
+        }
+    }
+}
